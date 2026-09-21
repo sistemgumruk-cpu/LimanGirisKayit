@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+
+# Veritabanı ve Yedekler
+*.db
+*.sqlite3
+*.db-journal
+logistics_yedek_*.db
+logistics_backup_*.json
+
+# Yüklenen Kullanıcı Evrakları (uploads/.gitkeep hariç)
+uploads/*
+!uploads/.gitkeep
+
+# Ortam Değişkenleri
+.env
+.env.local
+.env.*.local
+secrets.json
+
+# Editörler
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
