@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Yoldaki Araç Bildirim Formu | Lojistik Giriş</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-slate-100 min-h-screen text-slate-800 font-sans antialiased pb-12">
+
+    <!-- Üst Başlık Barı (Logo & Başlık) -->
+    <header class="bg-white border-b border-slate-200 shadow-sm sticky top-0 z-30">
+        <div class="max-w-2xl mx-auto px-4 py-2 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <a href="/" class="flex items-center shrink-0">
+                    <img src="/static/img/logo.png" alt="Sistem Gümrük Müşavirliği" class="h-10 sm:h-12 w-auto object-contain">
+                </a>
+                <div class="border-l border-slate-200 pl-3">
+                    <h1 class="font-bold text-slate-800 text-sm sm:text-base leading-tight">Yük Boşaltma Bildirimi</h1>
+                    <p class="text-[11px] text-slate-500">Yoldaki Araç Kayıt Formu</p>
+                </div>
+            </div>
+            <a href="/login" class="flex items-center space-x-1.5 text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-xl border border-slate-300 font-medium transition shadow-xs">
+                <i data-lucide="shield-check" class="w-4 h-4 text-emerald-600"></i>
+                <span>Operasyon</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Ana Form Alanı -->
+    <main class="max-w-2xl mx-auto px-4 mt-5">
+        
+        <!-- 1. BOŞALTMA KONUMU & HARİTA BUTONU (Kullanıcının talep ettiği harita linki) -->
+        <div class="bg-gradient-to-r from-emerald-600 to-teal-700 rounded-2xl p-4 text-white shadow-md mb-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div class="flex items-center space-x-3 text-center sm:text-left">
+                <div class="p-2.5 bg-white/20 backdrop-blur rounded-xl">
+                    <i data-lucide="map-pin" class="w-6 h-6 text-yellow-300"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold text-base leading-tight">Boşaltma Sahası Konumu</h3>
+                    <p class="text-xs text-emerald-100 mt-0.5">Navigasyon ile tesisimize doğrudan ulaşın</p>
+                </div>
+            </div>
+            <a href="{{ maps_url or 'https://maps.app.goo.gl/F9ELLLUwNawegT8r5?g_st=iw' }}" target="_blank" rel="noopener noreferrer"
+                class="w-full sm:w-auto px-4 py-2.5 bg-white text-emerald-800 hover:bg-emerald-50 active:scale-95 font-bold text-xs sm:text-sm rounded-xl shadow-lg flex items-center justify-center gap-2 transition">
+                <i data-lucide="navigation" class="w-4 h-4 text-emerald-600"></i>
+                <span>Google Haritalar'da Aç</span>
+            </a>
+        </div>
+
+        <!-- 2. OPERASYONDAN ÖNEMLİ NOTLAR / DUYURU ALANI -->
+        <div id="driverNoticeBox" class="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl shadow-sm mb-4 flex items-start space-x-3">
+            <i data-lucide="alert-triangle" class="w-5 h-5 text-amber-600 shrink-0 mt-0.5"></i>
+            <div class="text-xs sm:text-sm text-amber-900 leading-relaxed">
+                <strong class="font-bold block text-amber-950 mb-0.5 uppercase tracking-wide">ÖNEMLİ OPERASYON BİLGİLENDİRMESİ:</strong>
+                <span id="driverNoticeText">{{ driver_notice or 'Varış saatine riayet edilmesi zorunludur. Belirtilen saatte gelmeyen araçlar cezalandırma politikası gereğince gün sonuna bırakılarak en son boşaltma işlemine tabi tutulacaktır.' }}</span>
+            </div>
+        </div>
+
+        <!-- Form Kartı -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="px-6 py-4 bg-slate-50 border-b border-slate-200">
+                <h2 class="font-semibold text-slate-800 flex items-center gap-2">
+                    <i data-lucide="clipboard-list" class="w-5 h-5 text-brand-600"></i>
+                    Araç & Yük Bilgileri
+                </h2>
+                <p class="text-xs text-slate-500 mt-0.5"><span class="text-red-500 font-bold">*</span> ile işaretli alanların doldurulması zorunludur.</p>
+            </div>
+
+            <form id="vehicleForm" class="p-6 space-y-5">
+                
+                <!-- Plaka Alanları (Yan Yana) -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label for="tractor_plate" class="block text-sm font-semibold text-slate-700 mb-1">
+                            Çekici Plaka <span class="text-red-500">*</span>
+                        </label>
+                        <div class="relative">
+                            <input type="text" id="tractor_plate" name="tractor_plate" required
+                                placeholder="Örn: 34 ABC 123"
+                                class="w-full pl-10 pr-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl uppercase font-mono tracking-wider font-semibold text-slate-800 focus:bg-white focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition text-base">
+                            <i data-lucide="car" class="w-5 h-5 text-slate-400 absolute left-3 top-3"></i>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="trailer_plate" class="block text-sm font-semibold text-slate-700 mb-1">
+                            Dorse Plaka <span class="text-red-500">*</span>
+                        </label>
+                        <div class="relative">
+                            <input type="text" id="trailer_plate" name="trailer_plate" required
+                                placeholder="Örn: 34 DEF 456"
+                                class="w-full pl-10 pr-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl uppercase font-mono tracking-wider font-semibold text-slate-800 focus:bg-white focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition text-base">
+                            <i data-lucide="container" class="w-5 h-5 text-slate-400 absolute left-3 top-3"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Alıcı Firma -->
+                <div>
+                    <label for="company_name" class="block text-sm font-semibold text-slate-700 mb-1">
+                        Alıcı Firma <span class="text-red-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <input type="text" id="company_name" name="company_name" required
+                            placeholder="Örn: Alıcı Firma Adı / Ünvanı"
+                            class="w-full pl-10 pr-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl font-medium text-slate-800 focus:bg-white focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition text-base">
+                        <i data-lucide="building-2" class="w-5 h-5 text-slate-400 absolute left-3 top-3"></i>
+                    </div>
+                </div>
+
+                <!-- Boşaltma Adresine Varış Tarihi ve Saati (Kullanıcının talep ettiği kritik uyarı notu ile) -->
+                <div>
+                    <label for="arrival_date" class="block text-sm font-semibold text-slate-700 mb-1">
+                        Boşaltma Adresine Varış Tarihi & Saati (ETA) <span class="text-red-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <input type="datetime-local" id="arrival_date" name="arrival_date" required
+                            class="w-full pl-10 pr-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl font-medium text-slate-800 focus:bg-white focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition text-base">
+                        <i data-lucide="calendar-clock" class="w-5 h-5 text-slate-400 absolute left-3 top-3"></i>
+                    </div>
+
+                    <!-- ÖZEL UYARI KUTUSU: Cezalandırma Politikası & Son Boşaltma -->
+                    <div class="mt-2.5 p-3.5 bg-red-50/90 border border-red-200 rounded-xl flex items-start space-x-2.5 text-xs text-red-950 leading-relaxed shadow-sm">
+                        <i data-lucide="alert-octagon" class="w-5 h-5 text-red-600 shrink-0 mt-0.5"></i>
+                        <div>
+                            <strong class="font-bold text-red-700 block mb-0.5">ÖNEMLİ VARIŞ ZAMANI KURALI:</strong>
+                            Varış tarihinin ve saatinin boşaltma operasyonunun düzgün yapılabilmesi için doğru ve eksiksiz girilmesi zorunludur. Aksi durumda boşaltma operasyonunda <strong>cezalandırma politikası</strong> uygulanmakta olup, belirtilen saatte tesise gelmeyen araçlar gün sonuna bırakılarak <u>en son boşaltma işlemine tabi tutulacaktır</u>.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-3 border-t border-slate-200">
+                    <span class="text-xs font-semibold tracking-wider text-slate-400 uppercase">Opsiyonel / Ekstra Bilgiler</span>
+                </div>
+
+                <!-- Brüt Ağırlık ve Kap Adedi -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label for="gross_weight" class="block text-sm font-medium text-slate-700 mb-1">
+                            Brüt Ağırlık (KG / Ton)
+                        </label>
+                        <div class="relative">
+                            <input type="number" step="any" id="gross_weight" name="gross_weight"
+                                placeholder="Örn: 24500"
+                                class="w-full pl-10 pr-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 focus:bg-white focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition">
+                            <i data-lucide="weight" class="w-5 h-5 text-slate-400 absolute left-3 top-3"></i>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="package_count" class="block text-sm font-medium text-slate-700 mb-1">
+                            Kap / Palet Adedi
+                        </label>
+                        <div class="relative">
+                            <input type="number" id="package_count" name="package_count"
+                                placeholder="Örn: 33"
+                                class="w-full pl-10 pr-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 focus:bg-white focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition">
+                            <i data-lucide="boxes" class="w-5 h-5 text-slate-400 absolute left-3 top-3"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- T1 / Tır Karne Bilgisi -->
+                <div>
+                    <label for="customs_doc_no" class="block text-sm font-medium text-slate-700 mb-1">
+                        T1 / Tır Karnesi / Beyanname No
+                    </label>
+                    <div class="relative">
+                        <input type="text" id="customs_doc_no" name="customs_doc_no"
+                            placeholder="Örn: 24TR... veya Tır Karne No"
+                            class="w-full pl-10 pr-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl font-mono text-slate-800 focus:bg-white focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition">
+                        <i data-lucide="file-text" class="w-5 h-5 text-slate-400 absolute left-3 top-3"></i>
+                    </div>
+                </div>
+
+                <!-- Taşıma Belgesi Fotoğrafı Çekme / Yükleme (Kullanıcının talep ettiği özellik) -->
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1 flex items-center justify-between">
+                        <span class="flex items-center gap-1.5">
+                            <i data-lucide="camera" class="w-4 h-4 text-emerald-600"></i>
+                            Taşıma Belgesi Fotoğrafı (T1 / Tır Karnesi)
+                        </span>
+                        <span class="text-xs text-slate-400 font-normal">İsteğe Bağlı</span>
+                    </label>
+                    
+                    <!-- Kamera & Dosya Seçimi (Gizli input, capture=environment mobil kamerayı tetikler) -->
+                    <input type="file" id="document_photo" name="document_photo" accept="image/*,.pdf" capture="environment" class="hidden">
+                    
+                    <!-- Fotoğraf Çek / Yükle Dokunmatik Alanı -->
+                    <div id="photoDropArea" onclick="document.getElementById('document_photo').click()"
+                        class="border-2 border-dashed border-slate-300 hover:border-emerald-500 bg-slate-50 hover:bg-emerald-50/40 rounded-2xl p-4 text-center cursor-pointer transition flex flex-col items-center justify-center space-y-2 group">
+                        <div class="w-12 h-12 bg-white rounded-full shadow-sm flex items-center justify-center text-slate-400 group-hover:text-emerald-600 transition">
+                            <i data-lucide="camera" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs sm:text-sm font-semibold text-slate-700 group-hover:text-emerald-800">
+                                📸 Fotoğraf Çek veya Galeriden Seç
+                            </p>
+                            <p class="text-[11px] text-slate-400 mt-0.5">T1 belgesi veya Tır Karnesi evrakını telefonunuzun kamerasıyla çekebilirsiniz</p>
+                        </div>
+                    </div>
+
+                    <!-- Fotoğraf Seçildiğinde Önizleme -->
+                    <div id="photoPreviewContainer" class="hidden mt-2 p-3 bg-slate-50 border border-slate-200 rounded-2xl flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <img id="photoPreviewImg" src="" alt="Belge Önizleme" class="w-14 h-14 object-cover rounded-xl border border-slate-300 shadow-sm">
+                            <div>
+                                <p id="photoFileName" class="text-xs font-bold text-slate-800 truncate max-w-[180px] sm:max-w-xs"></p>
+                                <p id="photoFileSize" class="text-[11px] text-emerald-600 font-medium"></p>
+                            </div>
+                        </div>
+                        <button type="button" onclick="removePhoto(event)" class="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition" title="Fotoğrafı Kaldır">
+                            <i data-lucide="trash-2" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Şoförün Ekleyebileceği Önemli Not -->
+                <div>
+                    <label for="important_notes" class="block text-sm font-medium text-slate-700 mb-1">
+                        Varsa Önemli Notunuz / Yük Özelliği
+                    </label>
+                    <div class="relative">
+                        <textarea id="important_notes" name="important_notes" rows="2"
+                            placeholder="Örn: Vinçle indirilecek, acil hammadde, kırılabilir yük vb."
+                            class="w-full pl-10 pr-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 text-sm focus:bg-white focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition"></textarea>
+                        <i data-lucide="message-square" class="w-5 h-5 text-slate-400 absolute left-3 top-3"></i>
+                    </div>
+                </div>
+
+                <!-- Hata Mesajı Kutusu -->
+                <div id="errorAlert" class="hidden p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm flex items-center gap-2">
+                    <i data-lucide="alert-circle" class="w-5 h-5 text-red-500 shrink-0"></i>
+                    <span id="errorMessage"></span>
+                </div>
+
+                <!-- Gönder Butonu -->
+                <div class="pt-2">
+                    <button type="submit" id="submitBtn"
+                        class="w-full py-3.5 px-4 bg-brand-600 hover:bg-brand-700 active:scale-[0.99] text-white font-semibold rounded-xl shadow-lg shadow-brand-500/30 flex items-center justify-center space-x-2 transition text-base">
+                        <i data-lucide="send" class="w-5 h-5"></i>
+                        <span>Araç Girişini Tamamla</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- ============================================================== -->
+        <!-- 3. CANLI LİMAN GİRİŞ ONAYI & DEPO TAKİP LİSTESİ (ŞOFÖRLER İÇİN)-->
+        <!-- ============================================================== -->
+        <div class="mt-6 bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden mb-6">
+            <!-- Kart Başlığı -->
+            <div class="p-4 sm:p-5 bg-gradient-to-r from-slate-900 to-slate-800 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div class="flex items-center space-x-3">
+                    <div class="p-2.5 bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 rounded-xl">
+                        <i data-lucide="anchor" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <h2 class="font-bold text-base sm:text-lg flex items-center gap-2">
+                            <span>Liman Giriş Onayı Verilen Araçlar</span>
+                            <span id="portCountBadge" class="bg-cyan-500 text-white text-xs font-mono px-2 py-0.5 rounded-full font-bold">0</span>
+                        </h2>
+                        <p class="text-xs text-slate-300">Liman sahasına giriş onayı verilen araçların güncel plaka ve boşaltma depo listesi</p>
+                    </div>
+                </div>
+                <!-- Canlı Yenile Butonu -->
+                <button type="button" onclick="loadApprovedVehicles()" 
+                    class="self-start sm:self-auto px-3.5 py-1.5 bg-white/10 hover:bg-white/20 active:scale-95 text-white text-xs font-semibold rounded-xl flex items-center gap-1.5 transition">
+                    <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+                    <span>Yenile</span>
+                </button>
+            </div>
+
+            <!-- Arama & Filtreleme Çubuğu -->
+            <div class="p-3.5 bg-slate-50 border-b border-slate-200">
+                <div class="relative">
+                    <input type="text" id="approvedSearchInput" oninput="filterApprovedVehicles()" placeholder="Plakanızı arayın (Örn: 34 ABC 123)..."
+                        class="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500">
+                    <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5"></i>
+                </div>
+            </div>
+
+            <!-- Liste Gövdesi -->
+            <div class="p-3 sm:p-4">
+                <!-- Yükleniyor Göstergesi -->
+                <div id="approvedLoading" class="text-center py-8">
+                    <i data-lucide="loader-2" class="w-6 h-6 animate-spin text-cyan-600 mx-auto mb-2"></i>
+                    <p class="text-xs text-slate-500">Liman giriş onay listesi yükleniyor...</p>
+                </div>
+
+                <!-- Boş Durum (Henüz onaylanan araç yok) -->
+                <div id="approvedEmpty" class="hidden text-center py-8 px-4">
+                    <div class="w-12 h-12 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mx-auto mb-2">
+                        <i data-lucide="clock" class="w-6 h-6"></i>
+                    </div>
+                    <p class="text-sm font-bold text-slate-700">Henüz Liman Giriş Onayı Verilmiş Araç Bulunmuyor</p>
+                    <p class="text-xs text-slate-500 mt-1 max-w-md mx-auto">Operasyon ekibimiz aracınızın liman giriş kaydını onayladığında plakanız ve boşaltma deponuz burada yayınlanacaktır.</p>
+                </div>
+
+                <!-- Araç Kartları Konteyneri -->
+                <div id="approvedListContainer" class="hidden space-y-3">
+                    <!-- Dinamik JavaScript ile doldurulacak -->
+                </div>
+            </div>
+
+            <!-- Alt Bilgi Çubuğu -->
+            <div class="px-4 py-2.5 bg-slate-50 border-t border-slate-200 text-[11px] text-slate-500 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                <span class="flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-cyan-500 animate-pulse"></span>
+                    <span>Canlı Takip: Liste her 20 saniyede bir otomatik yenilenir.</span>
+                </span>
+                <span id="approvedLastUpdated" class="font-mono text-slate-400 text-[11px]">-</span>
+            </div>
+        </div>
+    </main>
+
+    <!-- Başarı Modalı (Success Modal) -->
+    <div id="successModal" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 text-center shadow-2xl animate-fade-in">
+            <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i data-lucide="check-circle" class="w-10 h-10"></i>
+            </div>
+            <h3 class="text-xl font-bold text-slate-900 mb-1">Kayıt Başarıyla Alındı!</h3>
+            <p class="text-sm text-slate-600 mb-4">
+                Aracınız sisteme işlenmiştir. Sahaya vardığınızda operasyon ekibimiz boşaltma deponuzu belirleyecektir.
+            </p>
+            
+            <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 text-left text-xs space-y-1 mb-4">
+                <div class="flex justify-between"><span class="text-slate-500">Çekici:</span> <strong id="modalTractor" class="text-slate-800 font-mono"></strong></div>
+                <div class="flex justify-between"><span class="text-slate-500">Dorse:</span> <strong id="modalTrailer" class="text-slate-800 font-mono"></strong></div>
+                <div class="flex justify-between"><span class="text-slate-500">Firma:</span> <strong id="modalCompany" class="text-slate-800"></strong></div>
+                <div class="flex justify-between"><span class="text-slate-500">Varış Zamanı:</span> <strong id="modalArrival" class="text-slate-800"></strong></div>
+            </div>
+
+            <!-- Doğrudan Harita Navigasyonu Butonu -->
+            <a href="{{ maps_url or 'https://maps.app.goo.gl/F9ELLLUwNawegT8r5?g_st=iw' }}" target="_blank" rel="noopener noreferrer"
+                class="w-full py-3 mb-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl flex items-center justify-center gap-2 shadow-md shadow-emerald-600/30 transition">
+                <i data-lucide="navigation" class="w-4 h-4"></i>
+                <span>Boşaltma Konumuna Git (Google Haritalar)</span>
+            </a>
+
+            <button type="button" onclick="resetFormAndClose()"
+                class="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl transition text-sm">
+                Yeni Araç Kaydet
+            </button>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        // Varsayılan varış zamanını bugünün tarihi ve şu anki saat olarak ayarla
+        window.addEventListener('DOMContentLoaded', () => {
+            const now = new Date();
+            // Yerel saat dilimi ile formatlama (YYYY-MM-DDTHH:mm)
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const localIso = `${year}-${month}-${day}T${hours}:${minutes}`;
+            
+            const arrivalInput = document.getElementById('arrival_date');
+            if (arrivalInput && !arrivalInput.value) {
+                arrivalInput.value = localIso;
+            }
+
+            // Plaka alanlarını otomatik büyük harf yapma
+            ['tractor_plate', 'trailer_plate'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.addEventListener('input', (e) => {
+                        e.target.value = e.target.value.toUpperCase();
+                    });
+                }
+            });
+        });
+
+        // Fotoğraf Seçimi ve Önizleme Mantığı
+        const photoInput = document.getElementById('document_photo');
+        const photoDropArea = document.getElementById('photoDropArea');
+        const photoPreviewContainer = document.getElementById('photoPreviewContainer');
+        const photoPreviewImg = document.getElementById('photoPreviewImg');
+        const photoFileName = document.getElementById('photoFileName');
+        const photoFileSize = document.getElementById('photoFileSize');
+
+        photoInput.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files[0]) {
+                const file = e.target.files[0];
+                photoFileName.textContent = file.name;
+                photoFileSize.textContent = `${(file.size / 1024).toFixed(1)} KB • Belge Hazır`;
+                
+                if (file.type.startsWith('image/')) {
+                    photoPreviewImg.src = URL.createObjectURL(file);
+                } else {
+                    photoPreviewImg.src = 'https://cdn-icons-png.flaticon.com/512/337/337946.png';
+                }
+
+                photoPreviewContainer.classList.remove('hidden');
+                photoDropArea.classList.add('hidden');
+                lucide.createIcons();
+            }
+        });
+
+        function removePhoto(e) {
+            if (e) e.stopPropagation();
+            photoInput.value = '';
+            photoPreviewContainer.classList.add('hidden');
+            photoDropArea.classList.remove('hidden');
+        }
+
+        const form = document.getElementById('vehicleForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const errorAlert = document.getElementById('errorAlert');
+        const errorMessage = document.getElementById('errorMessage');
+        const successModal = document.getElementById('successModal');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            errorAlert.classList.add('hidden');
+
+            const tractor_plate = document.getElementById('tractor_plate').value.trim();
+            const trailer_plate = document.getElementById('trailer_plate').value.trim();
+            const company_name = document.getElementById('company_name').value.trim();
+            const arrival_date = document.getElementById('arrival_date').value.trim();
+            const gross_weight = document.getElementById('gross_weight').value.trim();
+            const package_count = document.getElementById('package_count').value.trim();
+            const customs_doc_no = document.getElementById('customs_doc_no').value.trim();
+            const important_notes = document.getElementById('important_notes').value.trim();
+
+            const formData = new FormData();
+            formData.append('tractor_plate', tractor_plate);
+            formData.append('trailer_plate', trailer_plate);
+            formData.append('company_name', company_name);
+            formData.append('arrival_date', arrival_date);
+            formData.append('gross_weight', gross_weight);
+            formData.append('package_count', package_count);
+            formData.append('customs_doc_no', customs_doc_no);
+            formData.append('important_notes', important_notes);
+
+            if (photoInput.files && photoInput.files[0]) {
+                formData.append('document_photo', photoInput.files[0]);
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i><span>Fotoğraf & Bilgiler Kaydediliyor...</span>';
+            lucide.createIcons();
+
+            try {
+                const response = await fetch('/api/kayit', {
+                    method: 'POST',
+                    body: formData
+                });
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    document.getElementById('modalTractor').textContent = tractor_plate;
+                    document.getElementById('modalTrailer').textContent = trailer_plate;
+                    document.getElementById('modalCompany').textContent = company_name;
+                    document.getElementById('modalArrival').textContent = arrival_date.replace('T', ' ');
+                    successModal.classList.remove('hidden');
+                } else {
+                    errorMessage.textContent = result.message || 'Kayıt yapılamadı, lütfen tekrar deneyiniz.';
+                    errorAlert.classList.remove('hidden');
+                }
+            } catch (err) {
+                errorMessage.textContent = 'Sunucuya bağlanılamadı. Lütfen internet bağlantınızı kontrol ediniz.';
+                errorAlert.classList.remove('hidden');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i data-lucide="send" class="w-5 h-5"></i><span>Araç Girişini Tamamla</span>';
+                lucide.createIcons();
+            }
+        });
+
+        function resetFormAndClose() {
+            successModal.classList.add('hidden');
+            form.reset();
+            removePhoto();
+            const now = new Date();
+            const localIso = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}T${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+            document.getElementById('arrival_date').value = localIso;
+            // Kayıt sonrası onay listesini de tazele
+            loadApprovedVehicles();
+        }
+
+        // ==============================================================
+        // CANLI LİMAN GİRİŞ ONAYI & DEPO TAKİP LİSTESİ MANTIĞI
+        // ==============================================================
+        let portVehiclesData = [];
+
+        async function loadApprovedVehicles() {
+            const loading = document.getElementById('approvedLoading');
+            const portBadge = document.getElementById('portCountBadge');
+            const lastUpdated = document.getElementById('approvedLastUpdated');
+
+            try {
+                const res = await fetch('/api/public/approved-vehicles');
+                const data = await res.json();
+                if (loading) loading.classList.add('hidden');
+
+                if (data.success) {
+                    const rawList = Array.isArray(data.port_vehicles) ? data.port_vehicles : [];
+                    portVehiclesData = rawList.filter(v => v.is_port_entered && !v.is_unloaded);
+                    if (portBadge) portBadge.textContent = portVehiclesData.length;
+
+                    const now = new Date();
+                    const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+                    if (lastUpdated) lastUpdated.textContent = `Son Güncelleme: ${timeStr}`;
+
+                    filterApprovedVehicles();
+                }
+            } catch (err) {
+                console.error('Liman giriş onayı listesi alınamadı:', err);
+                if (loading) loading.classList.add('hidden');
+            }
+        }
+
+        function filterApprovedVehicles() {
+            const searchEl = document.getElementById('approvedSearchInput');
+            const query = (searchEl ? searchEl.value : '').trim().toUpperCase();
+
+            let filtered = portVehiclesData;
+            if (query) {
+                filtered = portVehiclesData.filter(v => {
+                    const tractor = (v.tractor_plate || '').toUpperCase();
+                    const trailer = (v.trailer_plate || '').toUpperCase();
+                    const comp = (v.company_name || '').toUpperCase();
+                    const dock = (v.dock_number || '').toUpperCase();
+                    return tractor.includes(query) || trailer.includes(query) || comp.includes(query) || dock.includes(query);
+                });
+            }
+            renderApprovedVehicles(filtered);
+        }
+
+        function renderApprovedVehicles(vehicles) {
+            const empty = document.getElementById('approvedEmpty');
+            const container = document.getElementById('approvedListContainer');
+
+            if (!container || !empty) return;
+
+            if (!vehicles || vehicles.length === 0) {
+                container.innerHTML = '';
+                container.classList.add('hidden');
+                empty.classList.remove('hidden');
+                lucide.createIcons();
+                return;
+            }
+
+            empty.classList.add('hidden');
+            container.classList.remove('hidden');
+
+            // Sadece Liman Giriş Onayı Verilenler Listelenir
+            container.innerHTML = vehicles.map(v => {
+                const timeStr = v.port_entered_at ? v.port_entered_at.substring(0, 16).replace('T', ' ') : (v.created_at ? v.created_at.substring(0, 16).replace('T', ' ') : '');
+                
+                // Depo numarası kontrolü: Dolu ise depo rozeti, boş ise (Depo Bilgisi Girilmedi)
+                const hasDock = v.dock_number && v.dock_number.trim() !== '';
+                const dockBadge = hasDock
+                    ? `<div class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white font-bold text-xs sm:text-sm rounded-xl shadow-xs">
+                         <i data-lucide="warehouse" class="w-4 h-4 text-blue-200"></i>
+                         <span>${v.dock_number}</span>
+                       </div>`
+                    : `<div class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 text-amber-800 border border-amber-300 font-bold text-xs rounded-xl shadow-xs">
+                         <i data-lucide="alert-circle" class="w-4 h-4 text-amber-600"></i>
+                         <span>(Depo Bilgisi Girilmedi)</span>
+                       </div>`;
+
+                return `
+                    <div class="bg-gradient-to-r from-cyan-50/70 via-slate-50/50 to-white p-3.5 sm:p-4 rounded-2xl border border-cyan-200/90 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:border-cyan-300 transition">
+                        <div class="space-y-1.5">
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <span class="px-2.5 py-1 bg-slate-900 text-white font-mono font-bold text-sm rounded-xl shadow-xs tracking-wider">${v.tractor_plate}</span>
+                                <span class="px-2 py-0.5 bg-slate-200 text-slate-700 font-mono font-semibold text-xs rounded-lg">${v.trailer_plate}</span>
+                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 bg-cyan-100 text-cyan-800 text-xs font-bold rounded-full border border-cyan-200">
+                                    <i data-lucide="anchor" class="w-3.5 h-3.5 text-cyan-600"></i> Liman Giriş Onayı Verildi
+                                </span>
+                            </div>
+                            <div class="text-xs text-slate-600 flex items-center gap-2 flex-wrap">
+                                <span class="font-bold text-slate-800">${v.company_name}</span>
+                                ${timeStr ? `<span class="text-slate-400">• Liman Onay Saati: <strong class="text-slate-700 font-semibold">${timeStr}</strong></span>` : ''}
+                            </div>
+                        </div>
+                        <div class="shrink-0 flex items-center justify-between sm:justify-end gap-3 border-t sm:border-t-0 pt-2 sm:pt-0 border-cyan-100/80">
+                            <div class="text-left sm:text-right">
+                                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Boşaltma Deposu</span>
+                                <div class="mt-0.5">${dockBadge}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            lucide.createIcons();
+        }
+
+        // Sayfa açıldığında ve her 20 saniyede bir otomatik yükle
+        loadApprovedVehicles();
+        setInterval(loadApprovedVehicles, 20000);
+    </script>
+</body>
+</html>
