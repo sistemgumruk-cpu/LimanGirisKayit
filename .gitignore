@@ -31,3 +31,5 @@ secrets.json
 .idea/
 .DS_Store
 Thumbs.db
+database_sqlite_backup.py
+database_sqlite_backup.py
