@@ -584,20 +584,15 @@ def api_database_status():
 
 @app.route('/api/database/backup/db', methods=['GET'])
 def api_database_backup_db():
-    """Güncel SQLite (.db) veritabanı dosyasını yedek olarak indirir"""
+    """PostgreSQL kullanıldığı için eski SQLite .db yedekleme endpoint'i devre dışıdır."""
     if not is_authenticated():
         return jsonify({'error': 'Unauthorized'}), 401
-    try:
-        now_str = datetime.now().strftime('%Y%m%d_%H%M')
-        download_name = f"logistics_yedek_{now_str}.db"
-        return send_file(
-            database.DB_PATH,
-            as_attachment=True,
-            download_name=download_name,
-            mimetype="application/x-sqlite3"
-        )
-    except Exception as e:
-        return jsonify({'success': False, 'message': str(e)}), 500
+
+    return jsonify({
+        'success': False,
+        'message': 'Bu sistem PostgreSQL kullanmaktadır. Veritabanı yedeği için JSON yedekleme seçeneğini kullanınız.',
+        'backup_endpoint': '/api/database/backup/json'
+    }), 410
 
 @app.route('/api/database/backup/json', methods=['GET'])
 def api_database_backup_json():
