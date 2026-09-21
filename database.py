@@ -14,7 +14,7 @@ def get_connection():
             "DATABASE_URL ortam değişkeni bulunamadı. "
             "Render Web Service > Environment bölümüne PostgreSQL Internal Database URL ekleyin."
         )
-    return psycopg2.connect(database_url)
+    return psycopg2.connect(database_url, cursor_factory=RealDictCursor)
 
 def _fetchone(cursor):
     row = cursor.fetchone()
