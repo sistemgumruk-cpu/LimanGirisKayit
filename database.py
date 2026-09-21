@@ -225,7 +225,7 @@ def add_vehicle(
                     now_str,
                 ),
             )
-            vehicle_id = cursor.fetchone()[0]
+            vehicle_id = cursor.fetchone()['id']
 
         conn.commit()
         return vehicle_id
